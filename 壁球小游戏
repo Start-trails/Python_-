@@ -1,1 +1,73 @@
+# author: =.= time:2020/6/23
+import pygame
+import sys
+pygame.init() #引入及初始化
+icon = pygame.image.load("6.ico")
+pygame.display.set_icon(icon)
+size = width, height = 600, 400
+# Vinfo = pygame.display.Info()#屏幕信息函数
+# size = width, height = Vinfo.current_w, Vinfo.current_h
+speed = [1, 1]
+BLACK = 0, 0, 0
+# screen = pygame.display.set_mode(size) #初始化显示窗口， size为二值元组（宽度和高度）
+screen = pygame.display.set_mode(size, pygame.RESIZABLE) #窗口大小可调,仅外界边框
+# screen = pygame.display.set_mode(size, pygame.NOFRAME) #设置窗口无边框,需增加其他的退出游戏方式
+# screen = pygame.display.set_mode(size, pygame.FULLSCREEN) #窗口全屏显示
+# print(pygame.display.Info())#屏幕信息函数
+pygame.display.set_caption("pygame壁球") #建立左上角框架名称
+ball = pygame.image.load("zhang.jpg")
+ballrect = ball.get_rect() #将图片surface对象返回一个覆盖图像的矩形Rect对象
+fps = 300 #每秒帧率参数
+fclock = pygame.time.Clock()#创建一个clock对象,用于操作时间
+still = False
+bgcolor = pygame.Color("black")
 
+def RGBChannel(a):
+    return 0 if a < 0 else (255 if a > 255 else int(a))
+while True:  #事件及刷新
+    for event in pygame.event.get(): #从pygame事件队列中取出事件，并从队列删除该事件
+        if event.type == pygame.QUIT:
+            sys.exit() #退出结束游戏并退出
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                speed[0] = speed[0] if speed[0] == 0 else (abs(speed[0]) - 1) * int(speed[0]/abs(speed[0]))
+            elif event.key == pygame.K_RIGHT:
+                speed[0] = speed[0] + 1 if speed[0] > 0 else speed[0] - 1
+            elif event.key == pygame.K_UP:
+                speed[1] = speed[1] + 1 if speed[1] > 0 else speed[1] - 1
+            elif event.key == pygame.K_DOWN:
+                speed[1] = speed[1] if speed[1] == 0 else (abs(speed[1]) - 1) * int(speed[1]/abs(speed[1]))
+            elif event.key == pygame.K_ESCAPE:
+                sys.exit()
+        elif event.type == pygame.VIDEORESIZE:
+            size = width, height = event.size[0], event.size[1]
+            screen = pygame.display.set_mode(size, pygame.RESIZABLE)
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                still = True
+        elif event.type == pygame.MOUSEBUTTONUP:
+            still = False
+            if event.button == 1:
+                ballrect = ballrect.move(event.pos[0] - ballrect.left, event.pos[1] - ballrect.top)
+        elif event.type == pygame.MOUSEMOTION:
+            if event.buttons[0] == 1:
+                ballrect = ballrect.move(event.pos[0] - ballrect.left, event.pos[1] - ballrect.top)
+
+    if pygame.display.get_active() and not still:#缩小窗口时,小球静止不动
+        ballrect = ballrect.move(speed[0], speed[1]) #move(x，y),在横轴方向移动x像素，纵轴方向移动y像素
+    if ballrect.left < 0 or ballrect.right > width:#xy为整数
+        speed[0] = - speed[0]
+        if ballrect.right > width and ballrect.right + speed[0] > ballrect.right:
+            speed[0] = - speed[0]
+    if ballrect.top < 0 or ballrect.bottom > height:
+        speed[1] = - speed[1]
+        if ballrect.bottom > height and ballrect.bottom + speed[1] > ballrect.bottom:
+            speed[1] = - speed[1]
+    bgcolor.r = RGBChannel(ballrect.left * 255/width)
+    bgcolor.g = RGBChannel(ballrect.top * 255/height)
+    bgcolor.b = RGBChannel(min(speed[0], speed[1])*255/max(speed[0], speed[1], 1))
+
+    screen.fill(bgcolor)#小球运动后的位置为白色,此处用RGB色彩体系填充为黑色,从而不断刷新背景色
+    screen.blit(ball, ballrect)#将ball图像绘制到ballrect()图像位置
+    pygame.display.update()#对显示窗口进行更新，默认窗口全部重绘
+    fclock.tick(fps)#控制帧速度,即窗口刷新速度
